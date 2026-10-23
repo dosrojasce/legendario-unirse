@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Únete a mi misión · Legendario</title>
+<meta name="robots" content="noindex">
+<meta property="og:title" content="Te invitaron a una misión en equipo">
+<meta property="og:description" content="Toca para abrirla en Legendario.">
+<style>
+  :root { --bg: #14102a; --card: #1f1a40; --gold: #e2b65c; --text: #f6ecd2; --soft: #b9b0d6; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 50% 0%, #2a2160, var(--bg) 60%); color: var(--text);
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; padding: 24px 16px; }
+  main { width: 100%; max-width: 420px; text-align: center; }
+  img { width: 150px; height: 150px; object-fit: contain; }
+  h1 { font-family: Georgia, "Times New Roman", serif; letter-spacing: .04em; color: var(--gold); font-size: 26px; margin: 8px 0 4px; }
+  p { color: var(--soft); line-height: 1.5; margin: 8px 0; }
+  .card { background: var(--card); border: 1px solid #5b4a1f; border-radius: 18px; padding: 20px; margin-top: 18px; }
+  .code { font-size: 28px; font-weight: 800; letter-spacing: .12em; color: var(--text); margin: 6px 0; user-select: all; }
+  a.btn, button { display: block; width: 100%; padding: 15px; border-radius: 999px; border: 2px solid var(--gold); background: var(--gold);
+                  color: #241a05; font-weight: 800; font-size: 17px; text-decoration: none; margin-top: 12px; cursor: pointer; }
+  a.ghost, button.ghost { background: transparent; color: var(--gold); }
+  .hide { display: none; }
+  small { color: var(--soft); display: block; margin-top: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <img src="lumi.webp" alt="Lumi">
+  <h1>LEGENDARIO</h1>
+  <div id="ok">
+    <p>Te invitaron a una <b>misión en equipo</b>.</p>
+    <a class="btn" id="open" href="#">Abrir en la app</a>
+    <div class="card">
+      <p>¿No se abrió? En la app, ve a <b>Amigos</b> y pega este código:</p>
+      <div class="code" id="code"></div>
+      <button class="ghost" id="copy">Copiar código</button>
+    </div>
+    <div class="card" id="noapp">
+      <p>¿Aún no tienes Legendario? Pídele a quien te invitó el enlace para instalarla en Android.</p>
+    </div>
+    <small>Al abrirla verás la misión y quién te invita. Tú pides unirte y esa persona decide. Nadie ve tus otras misiones.</small>
+  </div>
+  <div id="bad" class="hide card">
+    <p>Este enlace no está completo. Pídele a quien te invitó que te lo vuelva a enviar.</p>
+  </div>
+</main>
+<script>
+  // Solo se acepta un código con la forma EQ-XXXXXX; cualquier otra cosa no se usa en ninguna parte.
+  var raw = new URLSearchParams(location.search).get('c') || '';
+  var code = /^EQ-[A-Z0-9]{6}$/i.test(raw) ? raw.toUpperCase() : null;
+  if (!code) {
+    document.getElementById('ok').classList.add('hide');
+    document.getElementById('bad').classList.remove('hide');
+  } else {
+    document.getElementById('code').textContent = code;
+    var isAndroid = /android/i.test(navigator.userAgent);
+    // En Android, "intent://" abre la app si está instalada; si no, vuelve a esta misma página.
+    var fallback = location.origin + location.pathname + '?c=' + code + '&sinapp=1';
+    document.getElementById('open').href = isAndroid
+      ? 'intent://join/' + code + '#Intent;scheme=legendario;package=com.legendario.app;S.browser_fallback_url=' + encodeURIComponent(fallback) + ';end'
+      : 'legendario://join/' + code;
+    if (new URLSearchParams(location.search).get('sinapp')) document.getElementById('noapp').scrollIntoView();
+    document.getElementById('copy').onclick = function () {
+      navigator.clipboard && navigator.clipboard.writeText(code);
+      this.textContent = '¡Copiado!';
+    };
+  }
+</script>
+</body>
+</html>
