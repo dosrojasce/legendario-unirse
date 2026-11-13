@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Panel del reino</title>
+<!--
+  Panel del reino: tablero para quien administra el proyecto, FUERA de la app (no pesa nada en el celular).
+  Aquí no hay ningún secreto: la URL y la llave publicable son las mismas públicas de la app. La seguridad la pone el
+  servidor (0038_admin_panel.sql): solo una cuenta en la tabla `admins` recibe datos; cualquier otra ve «SOLO_ADMIN».
+  Las métricas son totales, nunca personas.
+-->
+<style>
+  :root { --bg: #14102a; --card: #1f1a40; --card2: #2a2356; --gold: #e2b65c; --text: #f6ecd2; --soft: #b9b0d6; --good: #7fd6a0; --warn: #ffab9a; --line: #3b3270; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 50% 0%, #2a2160, var(--bg) 60%); color: var(--text);
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 24px 16px 48px; }
+  main { max-width: 980px; margin: 0 auto; display: grid; gap: 18px; }
+  h1 { font-family: Georgia, "Times New Roman", serif; letter-spacing: .04em; color: var(--gold); font-size: 26px; margin: 0; }
+  h2 { font-size: 15px; color: var(--gold); margin: 0 0 10px; letter-spacing: .03em; }
+  p, small { color: var(--soft); line-height: 1.5; margin: 6px 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .stat { background: var(--card2); border-radius: 12px; padding: 12px; }
+  .stat b { display: block; font-size: 28px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--soft); font-size: 13px; }
+  .goal { display: grid; gap: 6px; margin-top: 10px; }
+  .bar { height: 10px; border-radius: 99px; background: #0f0c22; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, #c98a1e, var(--gold)); border-radius: 99px; }
+  .row { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+  .weeks { display: flex; align-items: flex-end; gap: 8px; height: 120px; padding-top: 8px; }
+  .weeks div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; }
+  .weeks em { width: 100%; max-width: 44px; background: var(--gold); border-radius: 6px 6px 2px 2px; min-height: 2px; }
+  .weeks small { font-size: 11px; margin: 0; }
+  label { display: block; font-size: 13px; color: var(--soft); margin: 10px 0 4px; }
+  input, select, textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: #0f0c22; color: var(--text); font-size: 15px; }
+  button { padding: 11px 18px; border-radius: 999px; border: 1.5px solid var(--gold); background: linear-gradient(180deg, #f3cf7e, #d9a441);
+           color: #241a05; font-weight: 800; font-size: 15px; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--gold); }
+  button:disabled { opacity: .5; cursor: default; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--soft); font-weight: 600; font-size: 12px; }
+  .msg { padding: 10px 12px; border-radius: 10px; font-size: 14px; display: none; }
+  .msg.ok { display: block; background: #1d3b2c; color: var(--good); }
+  .msg.err { display: block; background: #3f2027; color: var(--warn); }
+  .tabs { display: flex; gap: 8px; margin: 10px 0; }
+  .tabs button { flex: 1; }
+  .two { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <div class="head">
+    <h1>✦ Panel del reino</h1>
+    <button id="out" class="ghost" hidden>Salir</button>
+  </div>
+
+  <!-- Entrar: con la cuenta de la app. Contraseña, o un código al correo (para quien entra con Google). -->
+  <section id="login" class="card" hidden>
+    <h2>Entrar</h2>
+    <p>Con la misma cuenta de la app. Solo una cuenta de administración ve los datos.</p>
+    <div class="tabs">
+      <button id="tabPass">Con contraseña</button>
+      <button id="tabCode" class="ghost">Con código al correo</button>
+    </div>
+    <label for="email">Correo</label>
+    <input id="email" type="email" autocomplete="email">
+    <div id="passBox">
+      <label for="pass">Contraseña</label>
+      <input id="pass" type="password" autocomplete="current-password">
+      <p><button id="doPass">Entrar</button></p>
+    </div>
+    <div id="codeBox" hidden>
+      <p><button id="sendCode" class="ghost">Enviarme un código</button></p>
+      <label for="code">Código del correo</label>
+      <input id="code" inputmode="numeric" autocomplete="one-time-code">
+      <p><button id="doCode">Entrar</button></p>
+    </div>
+    <div id="loginMsg" class="msg"></div>
+  </section>
+
+  <section id="denied" class="card" hidden>
+    <h2>Esta cuenta no administra el reino</h2>
+    <p>Para darle acceso, en Supabase → SQL Editor: <code>insert into public.admins (user_id) select id from auth.users where email = 'tu-correo';</code></p>
+  </section>
+
+  <section id="dash" hidden>
+    <div class="grid" style="margin-bottom:18px">
+      <div class="stat"><b id="m_opened">–</b><span>Activos por semana (abrieron la app)</span></div>
+      <div class="stat"><b id="m_did">–</b><span>Hicieron algo en 7 días</span></div>
+      <div class="stat"><b id="m_ret">–</b><span>Se quedan al mes (D30)</span></div>
+      <div class="stat"><b id="m_new">–</b><span>Cuentas nuevas en 7 días</span></div>
+      <div class="stat"><b id="m_acc">–</b><span>Cuentas en total</span></div>
+      <div class="stat"><b id="m_soc">–</b><span>Gremios · amistades</span></div>
+    </div>
+
+    <div class="two">
+      <div class="card">
+        <h2>Hitos</h2>
+        <div id="goals"></div>
+        <small>Solo cuentan las cuentas: quien usa la app sin cuenta sale en Play Console.</small>
+      </div>
+      <div class="card">
+        <h2>Cuentas nuevas por semana</h2>
+        <div id="weeks" class="weeks"></div>
+      </div>
+    </div>
+
+    <div class="two" style="margin-top:18px">
+      <div class="card">
+        <h2>🪙 Dar monedas de regalo</h2>
+        <label for="g_name">Usuario del héroe (o «todos»)</label>
+        <input id="g_name" placeholder="Laura">
+        <label for="g_coins">Monedas (1 a 5000)</label>
+        <input id="g_coins" type="number" min="1" max="5000" value="300">
+        <label for="g_reason">Motivo (sale en el aviso)</label>
+        <select id="g_reason">
+          <option value="tester">Por ayudar a probar</option>
+          <option value="founder">De los primeros héroes</option>
+          <option value="gift">Un regalo sin más</option>
+        </select>
+        <label for="g_msg">Mensaje (opcional, máx. 120)</label>
+        <input id="g_msg" maxlength="120" placeholder="Gracias por encontrar ese error">
+        <p><button id="g_send">Dar monedas</button></p>
+        <div id="g_out" class="msg"></div>
+      </div>
+      <div class="card">
+        <h2>Últimos regalos</h2>
+        <table><thead><tr><th>Cuándo</th><th>Héroe</th><th>Monedas</th><th>Motivo</th></tr></thead><tbody id="grants"></tbody></table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h2>⚠️ Errores de la última semana</h2>
+      <table><thead><tr><th>Veces</th><th>Mensaje</th><th>Pantalla</th><th>Versión</th><th>Último</th></tr></thead><tbody id="errors"></tbody></table>
+    </div>
+    <p><button id="reload" class="ghost">Actualizar</button> <small id="stamp"></small></p>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script>
+  // Públicos a propósito (los mismos de la app). Sin la cuenta de administración no sirven para ver nada aquí.
+  const db = supabase.createClient('https://qdeenxaxzuvaoagglnrt.supabase.co', 'sb_publishable_0xrB3HlljFJ04imZSzoOtw_AV63qEjy');
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const show = (id) => ['login', 'denied', 'dash'].forEach((x) => ($(x).hidden = x !== id));
+  const say = (el, text, ok) => { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
+  const when = (iso) => new Date(iso).toLocaleString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const REASONS = { tester: 'Probar', founder: 'Primeros', gift: 'Regalo' };
+  // Los hitos del plan de lanzamiento (store/plan-lanzamiento.md).
+  const GOALS = [
+    { name: 'Lanzamiento suave', weekly: 100, ret: 12 },
+    { name: 'Encender las monedas', weekly: 500, ret: 15 },
+    { name: 'Temporadas', weekly: 2000, ret: null },
+  ];
+
+  async function start() {
+    const { data } = await db.auth.getSession();
+    $('out').hidden = !data.session;
+    if (!data.session) return show('login');
+    const { data: admin } = await db.rpc('is_admin');
+    if (!admin) return show('denied');
+    show('dash');
+    load();
+  }
+
+  async function load() {
+    const [m, g, e] = await Promise.all([db.rpc('admin_metrics'), db.rpc('admin_recent_grants', { p_limit: 15 }), db.rpc('admin_recent_errors', { p_limit: 15 })]);
+    if (m.error) return say($('g_out'), 'No se pudieron leer las métricas: ' + m.error.message, false);
+    const x = m.data;
+    const ret = x.cohort30 ? Math.round((1000 * x.retained30) / x.cohort30) / 10 : null;
+    $('m_opened').textContent = x.opened7;
+    $('m_did').textContent = x.did7;
+    $('m_ret').textContent = ret == null ? '—' : ret + ' %';
+    $('m_new').textContent = x.new7;
+    $('m_acc').textContent = x.accounts;
+    $('m_soc').textContent = x.guilds + ' · ' + x.friendships;
+    $('goals').innerHTML = GOALS.map((goal) => {
+      const pct = Math.min(100, Math.round((100 * x.opened7) / goal.weekly));
+      const retOk = goal.ret == null || (ret != null && ret >= goal.ret);
+      return `<div class="goal"><div class="row"><span>${esc(goal.name)}</span><span>${x.opened7} / ${goal.weekly} activos</span></div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+        ${goal.ret != null ? `<small>Se quedan al mes: ${ret == null ? 'aún sin datos' : ret + ' %'} de ${goal.ret} % ${retOk ? '✓' : ''}</small>` : ''}</div>`;
+    }).join('');
+    const max = Math.max(1, ...x.weeks.map((w) => w.new));
+    $('weeks').innerHTML = x.weeks.length
+      ? x.weeks.map((w) => `<div><small>${w.new}</small><em style="height:${Math.round((100 * w.new) / max)}%"></em><small>${esc(w.week.slice(5))}</small></div>`).join('')
+      : '<p>Aún no hay cuentas nuevas en estas semanas.</p>';
+    $('grants').innerHTML = (g.data ?? []).map((r) => `<tr><td>${when(r.created_at)}</td><td>${esc(r.hero)}</td><td>${r.coins}</td><td>${esc(REASONS[r.reason] ?? r.reason)}${r.message ? '<br><small>' + esc(r.message) + '</small>' : ''}</td></tr>`).join('') || '<tr><td colspan="4">Ninguno todavía.</td></tr>';
+    $('errors').innerHTML = (e.data ?? []).map((r) => `<tr><td>${r.times}</td><td>${esc(r.message)}</td><td>${esc(r.screen)}</td><td>${esc(r.app_version)}</td><td>${when(r.last_at)}</td></tr>`).join('') || '<tr><td colspan="5">Sin errores esta semana ✓</td></tr>';
+    $('stamp').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Entrar
+  const mode = (code) => { $('passBox').hidden = code; $('codeBox').hidden = !code; $('tabPass').className = code ? 'ghost' : ''; $('tabCode').className = code ? '' : 'ghost'; };
+  $('tabPass').onclick = () => mode(false);
+  $('tabCode').onclick = () => mode(true);
+  $('doPass').onclick = async () => {
+    const { error } = await db.auth.signInWithPassword({ email: $('email').value.trim(), password: $('pass').value });
+    if (error) return say($('loginMsg'), 'No se pudo entrar: ' + error.message, false);
+    $('pass').value = '';
+    start();
+  };
+  $('sendCode').onclick = async () => {
+    // shouldCreateUser: false → el panel nunca crea cuentas nuevas.
+    const { error } = await db.auth.signInWithOtp({ email: $('email').value.trim(), options: { shouldCreateUser: false } });
+    say($('loginMsg'), error ? 'No se pudo enviar: ' + error.message : 'Te llegó un código al correo.', !error);
+  };
+  $('doCode').onclick = async () => {
+    const { error } = await db.auth.verifyOtp({ email: $('email').value.trim(), token: $('code').value.trim(), type: 'email' });
+    if (error) return say($('loginMsg'), 'Código incorrecto o vencido: ' + error.message, false);
+    start();
+  };
+  $('out').onclick = async () => { await db.auth.signOut(); start(); };
+  $('reload').onclick = load;
+
+  // Dar monedas: siempre se confirma antes (a «todos» le llega a cada cuenta).
+  $('g_send').onclick = async () => {
+    const name = $('g_name').value.trim();
+    const coins = parseInt($('g_coins').value, 10);
+    if (!name || !(coins >= 1 && coins <= 5000)) return say($('g_out'), 'Escribe un usuario (o «todos») y entre 1 y 5000 monedas.', false);
+    const who = name.toLowerCase() === 'todos' ? 'TODAS las cuentas' : name;
+    if (!confirm(`¿Dar ${coins} monedas a ${who}? Les llega un aviso al celular y no se puede deshacer.`)) return;
+    $('g_send').disabled = true;
+    const { data, error } = await db.rpc('admin_grant_coins', { p_name: name, p_coins: coins, p_reason: $('g_reason').value, p_message: $('g_msg').value.trim() || null });
+    $('g_send').disabled = false;
+    if (error) return say($('g_out'), error.message.includes('No hay ningún héroe') ? 'No hay ningún héroe con ese usuario.' : 'No se pudo: ' + error.message, false);
+    say($('g_out'), `Listo: ${coins} monedas a ${data} ${data === 1 ? 'cuenta' : 'cuentas'}.`, true);
+    $('g_msg').value = '';
+    load();
+  };
+
+  db.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') start(); });
+  start();
+</script>
+</body>
+</html>
