@@ -49,6 +49,35 @@
   .tabs { display: flex; gap: 8px; margin: 10px 0; }
   .tabs button { flex: 1; }
   .two { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .delta { display: block; font-size: 12px; margin-top: 2px; color: var(--soft); }
+  .delta.up { color: var(--good); } .delta.down { color: var(--warn); }
+  .days { display: flex; align-items: flex-end; gap: 3px; height: 130px; padding-top: 8px; }
+  .days > div { flex: 1; display: flex; height: 100%; min-width: 0; }
+  .days .pair { display: flex; flex-direction: row; align-items: flex-end; width: 100%; gap: 1px; height: 100%; }
+  .days i { display: block; flex: 1; border-radius: 3px 3px 1px 1px; min-height: 2px; background: var(--gold); }
+  .days i.did { background: #8f7cff; }
+  .axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--soft); margin-top: 4px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--soft); margin-top: 6px; }
+  .legend b { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .usage td:nth-child(n+2), .usage th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  details { margin-top: 12px; }
+  summary { cursor: pointer; color: var(--gold); font-size: 14px; }
+  .ver { font-size: 13px; color: var(--soft); margin: 14px 0 4px; }
+  .ver b { color: var(--text); }
+  @media (max-width: 560px) {
+    body { padding: 16px 12px 40px; }
+    h1 { font-size: 21px; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat { padding: 10px; }
+    .stat b { font-size: 22px; }
+    .stat span { font-size: 12px; }
+    .two { grid-template-columns: 1fr; }
+    .card { padding: 12px; border-radius: 14px; }
+    table { font-size: 13px; }
+    th, td { padding: 6px 4px; }
+    .err-screen { display: none; }
+  }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -90,8 +119,8 @@
 
   <section id="dash" hidden>
     <div class="grid" style="margin-bottom:18px">
-      <div class="stat"><b id="m_opened">–</b><span>Activos por semana (abrieron la app)</span></div>
-      <div class="stat"><b id="m_did">–</b><span>Hicieron algo en 7 días</span></div>
+      <div class="stat"><b id="m_opened">–</b><small id="m_opened_d" class="delta"></small><span>Activos por semana (abrieron la app)</span></div>
+      <div class="stat"><b id="m_did">–</b><small id="m_did_d" class="delta"></small><span>Hicieron algo en 7 días</span></div>
       <div class="stat"><b id="m_ret">–</b><span>Se quedan al mes (D30)</span></div>
       <div class="stat"><b id="m_new">–</b><span>Cuentas nuevas en 7 días</span></div>
       <div class="stat"><b id="m_acc">–</b><span>Cuentas en total</span></div>
@@ -107,6 +136,18 @@
       <div class="card">
         <h2>Cuentas nuevas por semana</h2>
         <div id="weeks" class="weeks"></div>
+      </div>
+    </div>
+
+    <div class="two" style="margin-top:18px">
+      <div class="card">
+        <h2>📈 Activos día a día</h2>
+        <div id="daily"></div>
+      </div>
+      <div class="card">
+        <h2>🧭 Qué se usa</h2>
+        <div class="scroll"><table class="usage"><thead><tr><th></th><th>Esta semana</th><th>La anterior</th></tr></thead><tbody id="usage"></tbody></table></div>
+        <small>Solo cuántas cosas nuevas hubo, nunca de quién.</small>
       </div>
     </div>
 
@@ -130,13 +171,13 @@
       </div>
       <div class="card">
         <h2>Últimos regalos</h2>
-        <table><thead><tr><th>Cuándo</th><th>Héroe</th><th>Monedas</th><th>Motivo</th></tr></thead><tbody id="grants"></tbody></table>
+        <div class="scroll"><table><thead><tr><th>Cuándo</th><th>Héroe</th><th>Monedas</th><th>Motivo</th></tr></thead><tbody id="grants"></tbody></table></div>
       </div>
     </div>
 
     <div class="card" style="margin-top:18px">
       <h2>⚠️ Errores de la última semana</h2>
-      <table><thead><tr><th>Veces</th><th>Mensaje</th><th>Pantalla</th><th>Versión</th><th>Último</th></tr></thead><tbody id="errors"></tbody></table>
+      <div id="errors"></div>
     </div>
     <p><button id="reload" class="ghost">Actualizar</button> <small id="stamp"></small></p>
   </section>
@@ -152,7 +193,7 @@
   const say = (el, text, ok) => { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
   const when = (iso) => new Date(iso).toLocaleString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const REASONS = { tester: 'Probar', founder: 'Primeros', gift: 'Regalo' };
-  // Los hitos del plan de lanzamiento (store/plan-lanzamiento.md).
+  // Los hitos del plan de lanzamiento (docs/plan-lanzamiento.md).
   const GOALS = [
     { name: 'Lanzamiento suave', weekly: 100, ret: 12 },
     { name: 'Encender las monedas', weekly: 500, ret: 15 },
@@ -170,7 +211,10 @@
   }
 
   async function load() {
-    const [m, g, e] = await Promise.all([db.rpc('admin_metrics'), db.rpc('admin_recent_grants', { p_limit: 15 }), db.rpc('admin_recent_errors', { p_limit: 15 })]);
+    const [m, g, e, h, u] = await Promise.all([
+      db.rpc('admin_metrics'), db.rpc('admin_recent_grants', { p_limit: 15 }), db.rpc('admin_error_versions', { p_limit: 200 }),
+      db.rpc('admin_daily_history', { p_days: 30 }), db.rpc('admin_usage'),
+    ]);
     if (m.error) return say($('g_out'), 'No se pudieron leer las métricas: ' + m.error.message, false);
     const x = m.data;
     const ret = x.cohort30 ? Math.round((1000 * x.retained30) / x.cohort30) / 10 : null;
@@ -180,20 +224,87 @@
     $('m_new').textContent = x.new7;
     $('m_acc').textContent = x.accounts;
     $('m_soc').textContent = x.guilds + ' · ' + x.friendships;
+    // Hitos: cuánto falta, y de cuántas cuentas sale el D30 (con pocas, un % engaña).
+    const retOf = x.cohort30 ? ` (${x.retained30} de ${x.cohort30} ${x.cohort30 === 1 ? 'cuenta' : 'cuentas'})` : '';
     $('goals').innerHTML = GOALS.map((goal) => {
       const pct = Math.min(100, Math.round((100 * x.opened7) / goal.weekly));
+      const left = Math.max(0, goal.weekly - x.opened7);
       const retOk = goal.ret == null || (ret != null && ret >= goal.ret);
-      return `<div class="goal"><div class="row"><span>${esc(goal.name)}</span><span>${x.opened7} / ${goal.weekly} activos</span></div>
+      return `<div class="goal"><div class="row"><span>${esc(goal.name)}</span><span>${left === 0 ? '✓ ' : ''}${x.opened7} / ${goal.weekly}</span></div>
         <div class="bar"><i style="width:${pct}%"></i></div>
-        ${goal.ret != null ? `<small>Se quedan al mes: ${ret == null ? 'aún sin datos' : ret + ' %'} de ${goal.ret} % ${retOk ? '✓' : ''}</small>` : ''}</div>`;
+        <small>${left === 0 ? 'Activos por semana: logrado' : `Faltan ${left} activos por semana`}</small>
+        ${goal.ret != null ? `<small>Se quedan al mes: ${ret == null ? 'aún sin datos (hacen falta cuentas de hace 30–60 días)' : ret + ' %' + retOf} · meta ${goal.ret} % ${retOk ? '✓' : ''}</small>` : ''}</div>`;
     }).join('');
+    renderDaily(h.error ? null : h.data ?? [], x);
+    renderUsage(u.error ? null : u.data);
     const max = Math.max(1, ...x.weeks.map((w) => w.new));
     $('weeks').innerHTML = x.weeks.length
       ? x.weeks.map((w) => `<div><small>${w.new}</small><em style="height:${Math.round((100 * w.new) / max)}%"></em><small>${esc(w.week.slice(5))}</small></div>`).join('')
       : '<p>Aún no hay cuentas nuevas en estas semanas.</p>';
     $('grants').innerHTML = (g.data ?? []).map((r) => `<tr><td>${when(r.created_at)}</td><td>${esc(r.hero)}</td><td>${r.coins}</td><td>${esc(REASONS[r.reason] ?? r.reason)}${r.message ? '<br><small>' + esc(r.message) + '</small>' : ''}</td></tr>`).join('') || '<tr><td colspan="4">Ninguno todavía.</td></tr>';
-    $('errors').innerHTML = (e.data ?? []).map((r) => `<tr><td>${r.times}</td><td>${esc(r.message)}</td><td>${esc(r.screen)}</td><td>${esc(r.app_version)}</td><td>${when(r.last_at)}</td></tr>`).join('') || '<tr><td colspan="5">Sin errores esta semana ✓</td></tr>';
+    renderErrors(e.error ? null : e.data ?? []);
     $('stamp').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  const MISSING = '<p>Falta pegar la migración 0044 en Supabase (SQL Editor).</p>';
+
+  // ── Activos día a día: barras doradas (abrieron) y moradas (hicieron algo) de los últimos 30 días ──
+  function renderDaily(rows, x) {
+    if (!rows) { $('daily').innerHTML = MISSING; return; }
+    const week = rows.find((r) => daysAgo(r.day) === 7);
+    delta('m_opened_d', x.opened7, week && week.opened7);
+    delta('m_did_d', x.did7, week && week.did7);
+    if (rows.length < 2) {
+      $('daily').innerHTML = `<p>Desde hoy se guarda una foto de los totales cada día y la gráfica se va llenando sola${rows.length ? ` (hoy: ${rows[0].opened1} abrieron la app y ${rows[0].did1} hicieron algo)` : ''}.</p>`;
+      return;
+    }
+    const max = Math.max(1, ...rows.map((r) => Math.max(r.opened1, r.did1)));
+    const h = (n) => Math.round((100 * n) / max);
+    $('daily').innerHTML = `<div class="days">${rows.map((r) => `<div title="${esc(fmtDay(r.day))}: ${r.opened1} abrieron · ${r.did1} hicieron algo"><div class="pair"><i style="height:${h(r.opened1)}%"></i><i class="did" style="height:${h(r.did1)}%"></i></div></div>`).join('')}</div>
+      <div class="axis"><span>${esc(fmtDay(rows[0].day))}</span><span>${esc(fmtDay(rows[rows.length - 1].day))}</span></div>
+      <div class="legend"><span><b style="background:var(--gold)"></b>Abrieron la app (24 h)</span><span><b style="background:#8f7cff"></b>Hicieron algo (24 h)</span></div>`;
+  }
+  const daysAgo = (day) => Math.round((Date.now() - new Date(day + 'T12:00:00').getTime()) / 864e5);
+  const fmtDay = (day) => new Date(day + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short' });
+  function delta(id, now, before) {
+    const el = $(id);
+    if (before == null) { el.textContent = ''; el.className = 'delta'; return; }
+    const d = now - before;
+    el.textContent = d === 0 ? 'igual que hace 7 días' : `${d > 0 ? '▲ +' : '▼ '}${d} vs. hace 7 días`;
+    el.className = 'delta ' + (d > 0 ? 'up' : d < 0 ? 'down' : '');
+  }
+
+  // ── Qué se usa ──
+  const USAGE = [
+    ['teams', '👥 Misiones en equipo creadas'], ['guilds', '🏰 Gremios nuevos'], ['shared', '📣 Logros compartidos'],
+    ['cheers', '🔥 Reacciones y celebraciones'], ['blessings', '✨ Bendiciones'], ['gifts', '🎁 Regalos entre amigos'],
+  ];
+  function renderUsage(u) {
+    if (!u) { $('usage').innerHTML = '<tr><td colspan="3">Falta pegar la migración 0044 en Supabase.</td></tr>'; return; }
+    $('usage').innerHTML = USAGE.map(([k, label]) => {
+      const [now, before] = u[k] ?? [0, 0];
+      const arrow = now > before ? ' <span style="color:var(--good)">▲</span>' : now < before ? ' <span style="color:var(--warn)">▼</span>' : '';
+      return `<tr><td>${label}</td><td><b>${now}</b>${arrow}</td><td>${before}</td></tr>`;
+    }).join('');
+  }
+
+  // ── Errores por versión: la más nueva a la vista; las anteriores plegadas (suelen ser cosas ya arregladas) ──
+  const verKey = (v) => (String(v).match(/\d+/g) ?? []).map(Number).reduce((a, n) => a * 1000 + n, 0);
+  function errorTable(rows) {
+    return `<div class="scroll"><table><thead><tr><th>Veces</th><th>Mensaje</th><th class="err-screen">Pantalla</th><th>Último</th></tr></thead><tbody>${rows
+      .map((r) => `<tr><td>${r.times}</td><td>${esc(r.message)}</td><td class="err-screen">${esc(r.screen)}</td><td>${when(r.last_at)}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+  function renderErrors(rows) {
+    if (!rows) { $('errors').innerHTML = MISSING; return; }
+    if (!rows.length) { $('errors').innerHTML = '<p>Sin errores esta semana ✓</p>'; return; }
+    const byVer = new Map();
+    for (const r of rows) byVer.set(r.app_version, [...(byVer.get(r.app_version) ?? []), r]);
+    const vers = [...byVer.keys()].sort((a, b) => verKey(b) - verKey(a));
+    const sorted = (v) => byVer.get(v).sort((a, b) => b.times - a.times);
+    const [newest, ...older] = vers;
+    const olderCount = older.reduce((n, v) => n + byVer.get(v).reduce((t, r) => t + Number(r.times), 0), 0);
+    $('errors').innerHTML = `<p class="ver">Versión <b>${esc(newest)}</b> (la más nueva con errores)</p>${errorTable(sorted(newest))}`
+      + (older.length ? `<details><summary>De versiones anteriores (${olderCount}) · probablemente ya arreglados</summary>${older.map((v) => `<p class="ver">Versión <b>${esc(v)}</b></p>${errorTable(sorted(v))}`).join('')}</details>` : '');
   }
 
   // Entrar
