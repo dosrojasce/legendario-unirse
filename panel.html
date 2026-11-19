@@ -220,7 +220,7 @@
   <div id="dash" hidden>
     <nav class="jump" aria-label="Secciones">
       <a href="#s-hoy">Hoy</a><a href="#s-crece">Crecimiento</a><a href="#s-hitos">Hitos</a><a href="#s-uso">Qué se usa</a>
-      <a href="#s-server">Servidor</a><a href="#s-errores">Errores</a><a href="#s-monedas">Monedas</a>
+      <a href="#s-server">Servidor</a><a href="#s-errores">Errores</a><a href="#s-reportes">Reportes</a><a href="#s-monedas">Monedas</a>
     </nav>
 
     <div id="story" class="story">Cargando…</div>
@@ -293,6 +293,12 @@
       <div class="card"><div id="errors"></div></div>
     </section>
 
+    <!-- 6b. Reportes de gremios abiertos -->
+    <section class="sec" id="s-reportes">
+      <div class="sec-h"><h2>Gremios reportados</h2><p>Gremios abiertos que alguien reportó. «Cerrar» lo saca de Descubrir (el gremio sigue para sus miembros).</p></div>
+      <div class="card"><div id="reports"></div></div>
+    </section>
+
     <!-- 7. Monedas -->
     <section class="sec" id="s-monedas">
       <div class="sec-h"><h2>Monedas de regalo</h2><p>Para agradecer a testers o a los primeros héroes</p></div>
@@ -356,9 +362,9 @@
 
   async function load() {
     $('reload').disabled = true;
-    const [m, g, e, h, u, s] = await Promise.all([
+    const [m, g, e, h, u, s, r] = await Promise.all([
       db.rpc('admin_metrics'), db.rpc('admin_recent_grants', { p_limit: 15 }), db.rpc('admin_error_versions', { p_limit: 200 }),
-      db.rpc('admin_daily_history', { p_days: 30 }), db.rpc('admin_usage'), db.rpc('admin_storage'),
+      db.rpc('admin_daily_history', { p_days: 30 }), db.rpc('admin_usage'), db.rpc('admin_storage'), db.rpc('admin_gremio_reports', { p_limit: 30 }),
     ]);
     $('reload').disabled = false;
     if (m.error) return say($('loadMsg'), 'No se pudieron leer las métricas: ' + m.error.message, false);
@@ -384,6 +390,7 @@
     renderUsage(u.error ? null : u.data);
     renderServer(st);
     renderErrors(e.error ? null : e.data ?? []);
+    renderReports(r.error ? null : r.data ?? []);
     renderGrants(g.data ?? []);
     renderStory(x, hist, st);
     $('stamp').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
@@ -523,6 +530,25 @@
     const olderCount = older.reduce((n, v) => n + byVer.get(v).reduce((t, r) => t + Number(r.times), 0), 0);
     $('errors').innerHTML = `<p class="ver" style="margin-top:0">Versión <b>${esc(newest)}</b> · la más nueva con errores: estos son los que importan</p>${errorTable(sorted(newest))}`
       + (older.length ? `<details><summary>De versiones anteriores (${olderCount}) · probablemente ya arreglados</summary>${older.map((v) => `<p class="ver">Versión <b>${esc(v)}</b></p>${errorTable(sorted(v))}`).join('')}</details>` : '');
+  }
+
+  // ── Gremios reportados: nombre, cuántos reportes y por qué; cerrar lo saca de Descubrir ──
+  const REPORT_WHY = { name: 'nombre ofensivo', spam: 'spam o publicidad', other: 'otra cosa' };
+  function renderReports(rows) {
+    if (!rows) { $('reports').innerHTML = needs('0048'); return; }
+    if (!rows.length) { $('reports').innerHTML = '<p class="ok-big">✓ Ningún gremio reportado</p>'; return; }
+    $('reports').innerHTML = `<div class="scroll"><table><thead><tr><th>Gremio</th><th>Reportes</th><th>Por qué</th><th>Último</th><th></th></tr></thead><tbody>${rows
+      .map((x) => `<tr><td>${esc(x.emoji)} <b>${esc(x.name)}</b><br><small>${plural(x.members, 'miembro', 'miembros')}</small></td><td><b>${x.reports}</b></td><td>${(x.reasons ?? []).map((k) => esc(REPORT_WHY[k] ?? k)).join(', ')}</td><td>${when(x.last_at)}</td>`
+        + `<td>${x.open ? `<button class="ghost" data-close="${esc(x.gremio_id)}" data-name="${esc(x.name)}">Cerrar</button>` : '<small>Ya cerrado</small>'}</td></tr>`).join('')}</tbody></table></div>`;
+    for (const b of $('reports').querySelectorAll('[data-close]')) {
+      b.onclick = async () => {
+        if (!confirm(`¿Cerrar «${b.dataset.name}»? Deja de salir en Descubrir y se borran sus solicitudes pendientes. Sus miembros siguen dentro.`)) return;
+        b.disabled = true;
+        const { error } = await db.rpc('admin_close_gremio', { p_gremio: b.dataset.close });
+        if (error) { b.disabled = false; alert('No se pudo: ' + error.message); return; }
+        load();
+      };
+    }
   }
 
   function renderGrants(rows) {
