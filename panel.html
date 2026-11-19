@@ -4,76 +4,168 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#14102a">
 <title>Panel del reino</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <!--
   Panel del reino: tablero para quien administra el proyecto, FUERA de la app (no pesa nada en el celular).
   Aquí no hay ningún secreto: la URL y la llave publicable son las mismas públicas de la app. La seguridad la pone el
-  servidor (0038_admin_panel.sql): solo una cuenta en la tabla `admins` recibe datos; cualquier otra ve «SOLO_ADMIN».
+  servidor (0038, 0044 y 0046): solo una cuenta en la tabla `admins` recibe datos; cualquier otra ve «SOLO_ADMIN».
   Las métricas son totales, nunca personas.
 -->
 <style>
-  :root { --bg: #14102a; --card: #1f1a40; --card2: #2a2356; --gold: #e2b65c; --text: #f6ecd2; --soft: #b9b0d6; --good: #7fd6a0; --warn: #ffab9a; --line: #3b3270; }
+  :root {
+    --bg: #14102a; --card: #1e1940; --card2: #272052; --well: #100c24; --line: #352d68; --line2: #463c86;
+    --gold: #e2b65c; --gold2: #f3cf7e; --text: #f6ecd2; --soft: #b6add6; --dim: #8a81ad;
+    --good: #7fd6a0; --warn: #f2c46b; --bad: #ff9c8a; --violet: #9a88ff;
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 50% 0%, #2a2160, var(--bg) 60%); color: var(--text);
-         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 24px 16px 48px; }
-  main { max-width: 980px; margin: 0 auto; display: grid; gap: 18px; }
-  h1 { font-family: Georgia, "Times New Roman", serif; letter-spacing: .04em; color: var(--gold); font-size: 26px; margin: 0; }
-  h2 { font-size: 15px; color: var(--gold); margin: 0 0 10px; letter-spacing: .03em; }
-  p, small { color: var(--soft); line-height: 1.5; margin: 6px 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+  body { margin: 0; min-height: 100vh; color: var(--text); font: 15px/1.5 Nunito, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background: radial-gradient(1200px 600px at 50% -200px, #2d2366 0%, var(--bg) 60%) fixed, var(--bg); }
+  main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 56px; }
+  h1, h2 { font-family: Cinzel, Georgia, serif; font-weight: 700; letter-spacing: .03em; margin: 0; }
+  h1 { font-size: 24px; color: var(--gold); }
+  h2 { font-size: 17px; color: var(--gold); }
+  h3 { font-size: 14px; margin: 0 0 10px; color: var(--text); font-weight: 800; }
+  p { margin: 6px 0; color: var(--soft); }
+  small, .hint { color: var(--dim); font-size: 12.5px; }
+  a { color: var(--gold2); }
+  code { background: var(--well); padding: 2px 6px; border-radius: 6px; font-size: 12.5px; color: var(--gold2); }
+
+  /* Encabezado con el logo */
+  .top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .logo { width: 52px; height: 52px; border-radius: 14px; border: 2px solid var(--gold); box-shadow: 0 0 0 4px rgba(226,182,92,.15), 0 6px 18px rgba(0,0,0,.35); }
+  .brand { flex: 1; min-width: 180px; }
+  .brand p { margin: 0; font-size: 13px; }
+  .actions { display: flex; align-items: center; gap: 8px; }
+  .stamp { font-size: 12px; color: var(--dim); }
+
+  /* Saltar a una sección */
+  .jump { position: sticky; top: 0; z-index: 5; display: flex; gap: 6px; overflow-x: auto; padding: 10px 0; margin: 14px 0 6px;
+          background: linear-gradient(180deg, var(--bg) 70%, rgba(20,16,42,0)); scrollbar-width: none; }
+  .jump::-webkit-scrollbar { display: none; }
+  .jump a { flex: none; text-decoration: none; color: var(--soft); font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 99px;
+            border: 1px solid var(--line); background: var(--card); }
+  .jump a:hover { color: var(--gold2); border-color: var(--gold); }
+
+  /* Secciones */
+  .sec { margin-top: 26px; }
+  .sec-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+  .sec-h::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line2), transparent); }
+  .sec-h p { margin: 0; font-size: 13px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
-  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-  .stat { background: var(--card2); border-radius: 12px; padding: 12px; }
-  .stat b { display: block; font-size: 28px; color: var(--text); font-variant-numeric: tabular-nums; }
-  .stat span { color: var(--soft); font-size: 13px; }
-  .goal { display: grid; gap: 6px; margin-top: 10px; }
-  .bar { height: 10px; border-radius: 99px; background: #0f0c22; overflow: hidden; }
-  .bar i { display: block; height: 100%; background: linear-gradient(90deg, #c98a1e, var(--gold)); border-radius: 99px; }
-  .row { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
-  .weeks { display: flex; align-items: flex-end; gap: 8px; height: 120px; padding-top: 8px; }
+  .grid2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+  /* La frase de arriba */
+  .story { margin-top: 16px; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line2);
+           background: linear-gradient(135deg, rgba(226,182,92,.12), rgba(154,136,255,.08)); color: var(--text); font-size: 15.5px; }
+  .story b { color: var(--gold2); }
+
+  /* Números grandes */
+  .kpis { display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 2px; }
+  .kpi .lbl { font-size: 13px; font-weight: 700; color: var(--soft); }
+  .kpi .num { font-size: 34px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .kpi .hint { margin-top: auto; padding-top: 6px; }
+  .delta { font-size: 12.5px; font-weight: 700; color: var(--dim); }
+  .delta.up { color: var(--good); } .delta.down { color: var(--bad); }
+  .minis { display: grid; gap: 10px; grid-template-columns: repeat(4, 1fr); margin-top: 12px; }
+  .mini { background: var(--card2); border-radius: 12px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .mini span { color: var(--soft); font-size: 13px; }
+  .mini b { font-size: 18px; font-variant-numeric: tabular-nums; }
+
+  /* Barras */
+  .bar { height: 10px; border-radius: 99px; background: var(--well); overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #c98a1e, var(--gold)); }
+  .bar.good i { background: linear-gradient(90deg, #3e9f69, var(--good)); }
+  .bar.warn i { background: linear-gradient(90deg, #c98a1e, var(--warn)); }
+  .bar.bad i { background: linear-gradient(90deg, #c4523f, var(--bad)); }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+
+  /* Gráficas */
+  .chart { position: relative; height: 150px; margin-top: 6px; border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .chart .gl { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--line); }
+  .chart .gl span { position: absolute; left: 4px; top: -16px; font-size: 11px; color: var(--dim); }
+  .cols { position: absolute; inset: 0 0 0 4px; display: flex; align-items: flex-end; gap: 3px; }
+  .cols > div { flex: 1; height: 100%; display: flex; align-items: flex-end; gap: 1px; min-width: 0; }
+  .cols i { flex: 1; border-radius: 3px 3px 0 0; min-height: 2px; background: var(--gold); }
+  .cols i.v { background: var(--violet); }
+  .axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); margin-top: 4px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--soft); margin-top: 8px; }
+  .legend b { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .weeks { display: flex; align-items: flex-end; gap: 8px; height: 150px; padding-top: 6px; }
   .weeks div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; }
-  .weeks em { width: 100%; max-width: 44px; background: var(--gold); border-radius: 6px 6px 2px 2px; min-height: 2px; }
-  .weeks small { font-size: 11px; margin: 0; }
-  label { display: block; font-size: 13px; color: var(--soft); margin: 10px 0 4px; }
-  input, select, textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: #0f0c22; color: var(--text); font-size: 15px; }
-  button { padding: 11px 18px; border-radius: 999px; border: 1.5px solid var(--gold); background: linear-gradient(180deg, #f3cf7e, #d9a441);
-           color: #241a05; font-weight: 800; font-size: 15px; cursor: pointer; }
-  button.ghost { background: transparent; color: var(--gold); }
-  button:disabled { opacity: .5; cursor: default; }
+  .weeks em { width: 100%; max-width: 40px; background: linear-gradient(180deg, var(--gold2), #c98a1e); border-radius: 6px 6px 2px 2px; min-height: 2px; }
+  .weeks small { font-size: 11px; }
+  .weeks .n { color: var(--text); font-weight: 700; }
+
+  /* Hitos */
+  .goals { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .goal { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 8px; }
+  .goal.done { border-color: var(--good); }
+  .goal .step { font-size: 12px; font-weight: 800; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+  .goal .name { font-weight: 800; font-size: 16px; }
+  .check { font-size: 13px; color: var(--soft); }
+  .check b { color: var(--text); }
+
+  /* Servidor */
+  .meters { display: grid; gap: 16px; }
+  .meter { display: grid; gap: 6px; }
+  .meter .big { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .meter .of { color: var(--dim); font-size: 13px; font-weight: 600; }
+  .pill { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; }
+  .pill.good { background: rgba(127,214,160,.15); color: var(--good); }
+  .pill.warn { background: rgba(242,196,107,.15); color: var(--warn); }
+  .pill.bad { background: rgba(255,156,138,.15); color: var(--bad); }
+  .forecast { margin-top: 2px; padding: 12px; border-radius: 12px; background: var(--well); border: 1px solid var(--line); font-size: 14px; color: var(--soft); }
+  .forecast b { color: var(--text); }
+
+  /* Tablas */
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { color: var(--soft); font-weight: 600; font-size: 12px; }
-  .msg { padding: 10px 12px; border-radius: 10px; font-size: 14px; display: none; }
-  .msg.ok { display: block; background: #1d3b2c; color: var(--good); }
-  .msg.err { display: block; background: #3f2027; color: var(--warn); }
-  .tabs { display: flex; gap: 8px; margin: 10px 0; }
-  .tabs button { flex: 1; }
-  .two { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-  .delta { display: block; font-size: 12px; margin-top: 2px; color: var(--soft); }
-  .delta.up { color: var(--good); } .delta.down { color: var(--warn); }
-  .days { display: flex; align-items: flex-end; gap: 3px; height: 130px; padding-top: 8px; }
-  .days > div { flex: 1; display: flex; height: 100%; min-width: 0; }
-  .days .pair { display: flex; flex-direction: row; align-items: flex-end; width: 100%; gap: 1px; height: 100%; }
-  .days i { display: block; flex: 1; border-radius: 3px 3px 1px 1px; min-height: 2px; background: var(--gold); }
-  .days i.did { background: #8f7cff; }
-  .axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--soft); margin-top: 4px; }
-  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--soft); margin-top: 6px; }
-  .legend b { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
-  .usage td:nth-child(n+2), .usage th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  th { color: var(--dim); font-weight: 700; font-size: 12px; }
+  tr:last-child td { border-bottom: 0; }
+  .num-r td:nth-child(n+2), .num-r th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   details { margin-top: 12px; }
-  summary { cursor: pointer; color: var(--gold); font-size: 14px; }
-  .ver { font-size: 13px; color: var(--soft); margin: 14px 0 4px; }
+  summary { cursor: pointer; color: var(--gold2); font-size: 14px; font-weight: 700; }
+  .ver { font-size: 13px; color: var(--soft); margin: 12px 0 4px; }
   .ver b { color: var(--text); }
+  .ok-big { display: flex; align-items: center; gap: 10px; color: var(--good); font-weight: 700; }
+
+  /* Formularios y botones */
+  label { display: block; font-size: 13px; font-weight: 700; color: var(--soft); margin: 12px 0 4px; }
+  input, select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line2); background: var(--well); color: var(--text); font: inherit; }
+  input:focus, select:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+  button { padding: 10px 18px; border-radius: 999px; border: 1.5px solid var(--gold); background: linear-gradient(180deg, var(--gold2), #d9a441);
+           color: #241a05; font: 800 14px Nunito, system-ui, sans-serif; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--gold2); }
+  button.small { padding: 6px 12px; font-size: 13px; }
+  button:disabled { opacity: .5; cursor: default; }
+  .tabs { display: flex; gap: 8px; margin: 12px 0 4px; }
+  .tabs button { flex: 1; }
+  .msg { padding: 10px 12px; border-radius: 10px; font-size: 14px; display: none; margin-top: 10px; }
+  .msg.ok { display: block; background: #1d3b2c; color: var(--good); }
+  .msg.err { display: block; background: #3f2027; color: var(--bad); }
+  .narrow { max-width: 440px; margin: 40px auto 0; }
+
+  @media (max-width: 760px) {
+    .kpis, .minis { grid-template-columns: repeat(2, 1fr); }
+  }
   @media (max-width: 560px) {
-    body { padding: 16px 12px 40px; }
-    h1 { font-size: 21px; }
-    .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat { padding: 10px; }
-    .stat b { font-size: 22px; }
-    .stat span { font-size: 12px; }
-    .two { grid-template-columns: 1fr; }
-    .card { padding: 12px; border-radius: 14px; }
+    main { padding: 14px 12px 44px; }
+    h1 { font-size: 20px; }
+    .logo { width: 44px; height: 44px; border-radius: 12px; }
+    .brand p { display: none; }
+    .kpi { padding: 12px; }
+    .kpi .num { font-size: 28px; }
+    .card, .goal { padding: 13px; border-radius: 14px; }
+    .grid2 { grid-template-columns: 1fr; }
     table { font-size: 13px; }
     th, td { padding: 6px 4px; }
     .err-screen { display: none; }
@@ -83,13 +175,21 @@
 </head>
 <body>
 <main>
-  <div class="head">
-    <h1>✦ Panel del reino</h1>
-    <button id="out" class="ghost" hidden>Salir</button>
-  </div>
+  <header class="top">
+    <img class="logo" src="icon.png" alt="" width="52" height="52">
+    <div class="brand">
+      <h1>Panel del reino</h1>
+      <p>Cómo va el reino, en números. Solo totales: nunca personas.</p>
+    </div>
+    <div class="actions">
+      <span id="stamp" class="stamp"></span>
+      <button id="reload" class="ghost small" hidden>↻ Actualizar</button>
+      <button id="out" class="ghost small" hidden>Salir</button>
+    </div>
+  </header>
 
   <!-- Entrar: con la cuenta de la app. Contraseña, o un código al correo (para quien entra con Google). -->
-  <section id="login" class="card" hidden>
+  <section id="login" class="card narrow" hidden>
     <h2>Entrar</h2>
     <p>Con la misma cuenta de la app. Solo una cuenta de administración ve los datos.</p>
     <div class="tabs">
@@ -112,75 +212,114 @@
     <div id="loginMsg" class="msg"></div>
   </section>
 
-  <section id="denied" class="card" hidden>
+  <section id="denied" class="card narrow" hidden>
     <h2>Esta cuenta no administra el reino</h2>
     <p>Para darle acceso, en Supabase → SQL Editor: <code>insert into public.admins (user_id) select id from auth.users where email = 'tu-correo';</code></p>
   </section>
 
-  <section id="dash" hidden>
-    <div class="grid" style="margin-bottom:18px">
-      <div class="stat"><b id="m_opened">–</b><small id="m_opened_d" class="delta"></small><span>Activos por semana (abrieron la app)</span></div>
-      <div class="stat"><b id="m_did">–</b><small id="m_did_d" class="delta"></small><span>Hicieron algo en 7 días</span></div>
-      <div class="stat"><b id="m_ret">–</b><span>Se quedan al mes (D30)</span></div>
-      <div class="stat"><b id="m_new">–</b><span>Cuentas nuevas en 7 días</span></div>
-      <div class="stat"><b id="m_acc">–</b><span>Cuentas en total</span></div>
-      <div class="stat"><b id="m_soc">–</b><span>Gremios · amistades</span></div>
-    </div>
+  <div id="dash" hidden>
+    <nav class="jump" aria-label="Secciones">
+      <a href="#s-hoy">Hoy</a><a href="#s-crece">Crecimiento</a><a href="#s-hitos">Hitos</a><a href="#s-uso">Qué se usa</a>
+      <a href="#s-server">Servidor</a><a href="#s-errores">Errores</a><a href="#s-monedas">Monedas</a>
+    </nav>
 
-    <div class="two">
-      <div class="card">
-        <h2>Hitos</h2>
-        <div id="goals"></div>
-        <small>Solo cuentan las cuentas: quien usa la app sin cuenta sale en Play Console.</small>
-      </div>
-      <div class="card">
-        <h2>Cuentas nuevas por semana</h2>
-        <div id="weeks" class="weeks"></div>
-      </div>
-    </div>
+    <div id="story" class="story">Cargando…</div>
+    <div id="loadMsg" class="msg"></div>
 
-    <div class="two" style="margin-top:18px">
-      <div class="card">
-        <h2>📈 Activos día a día</h2>
-        <div id="daily"></div>
+    <!-- 1. Lo principal -->
+    <section class="sec" id="s-hoy">
+      <div class="sec-h"><h2>Hoy</h2><p>Los 4 números que dicen si el reino crece</p></div>
+      <div class="kpis">
+        <div class="kpi"><span class="lbl">Activos por semana</span><span class="num" id="m_opened">–</span><span class="delta" id="m_opened_d"></span>
+          <span class="hint">Abrieron la app en los últimos 7 días. Es el número de los hitos.</span></div>
+        <div class="kpi"><span class="lbl">Hicieron algo</span><span class="num" id="m_did">–</span><span class="delta" id="m_did_d"></span>
+          <span class="hint">Marcaron o cambiaron algo en 7 días (no solo abrieron).</span></div>
+        <div class="kpi"><span class="lbl">Se quedan al mes</span><span class="num" id="m_ret">–</span><span class="delta" id="m_ret_d"></span>
+          <span class="hint">De quienes llegaron hace 30–60 días, cuántos siguen abriendo la app (D30).</span></div>
+        <div class="kpi"><span class="lbl">Cuentas nuevas</span><span class="num" id="m_new">–</span><span class="delta"></span>
+          <span class="hint">Creadas en los últimos 7 días.</span></div>
       </div>
-      <div class="card">
-        <h2>🧭 Qué se usa</h2>
-        <div class="scroll"><table class="usage"><thead><tr><th></th><th>Esta semana</th><th>La anterior</th></tr></thead><tbody id="usage"></tbody></table></div>
-        <small>Solo cuántas cosas nuevas hubo, nunca de quién.</small>
+      <div class="minis">
+        <div class="mini"><span>Cuentas en total</span><b id="m_acc">–</b></div>
+        <div class="mini"><span>Gremios activos</span><b id="m_gld">–</b></div>
+        <div class="mini"><span>Amistades</span><b id="m_fr">–</b></div>
+        <div class="mini"><span>Errores en 7 días</span><b id="m_err">–</b></div>
       </div>
-    </div>
+    </section>
 
-    <div class="two" style="margin-top:18px">
-      <div class="card">
-        <h2>🪙 Dar monedas de regalo</h2>
-        <label for="g_name">Usuario del héroe (o «todos»)</label>
-        <input id="g_name" placeholder="Laura">
-        <label for="g_coins">Monedas (1 a 5000)</label>
-        <input id="g_coins" type="number" min="1" max="5000" value="300">
-        <label for="g_reason">Motivo (sale en el aviso)</label>
-        <select id="g_reason">
-          <option value="tester">Por ayudar a probar</option>
-          <option value="founder">De los primeros héroes</option>
-          <option value="gift">Un regalo sin más</option>
-        </select>
-        <label for="g_msg">Mensaje (opcional, máx. 120)</label>
-        <input id="g_msg" maxlength="120" placeholder="Gracias por encontrar ese error">
-        <p><button id="g_send">Dar monedas</button></p>
-        <div id="g_out" class="msg"></div>
+    <!-- 2. Crecimiento -->
+    <section class="sec" id="s-crece">
+      <div class="sec-h"><h2>Crecimiento</h2><p>Si sube, vamos bien</p></div>
+      <div class="grid2">
+        <div class="card"><h3>📈 Activos día a día</h3><div id="daily"></div></div>
+        <div class="card"><h3>🌱 Cuentas nuevas por semana</h3><div id="weeks" class="weeks"></div></div>
       </div>
-      <div class="card">
-        <h2>Últimos regalos</h2>
-        <div class="scroll"><table><thead><tr><th>Cuándo</th><th>Héroe</th><th>Monedas</th><th>Motivo</th></tr></thead><tbody id="grants"></tbody></table></div>
-      </div>
-    </div>
+    </section>
 
-    <div class="card" style="margin-top:18px">
-      <h2>⚠️ Errores de la última semana</h2>
-      <div id="errors"></div>
-    </div>
-    <p><button id="reload" class="ghost">Actualizar</button> <small id="stamp"></small></p>
-  </section>
+    <!-- 3. Hitos -->
+    <section class="sec" id="s-hitos">
+      <div class="sec-h"><h2>Hitos</h2><p>Del plan de lanzamiento</p></div>
+      <div id="goals" class="goals"></div>
+      <p class="hint" style="margin-top:8px">Solo cuentan las cuentas: quien usa la app sin cuenta sale en Play Console.</p>
+    </section>
+
+    <!-- 4. Qué se usa -->
+    <section class="sec" id="s-uso">
+      <div class="sec-h"><h2>Qué se usa</h2><p>Cosas nuevas esta semana contra la anterior</p></div>
+      <div class="card">
+        <div class="scroll"><table class="num-r"><thead><tr><th></th><th>Esta semana</th><th>La anterior</th></tr></thead><tbody id="usage"></tbody></table></div>
+        <p class="hint">Solo cuántas, nunca de quién.</p>
+      </div>
+    </section>
+
+    <!-- 5. Servidor -->
+    <section class="sec" id="s-server">
+      <div class="sec-h"><h2>Servidor</h2><p>Cuánto del plan gratis de Supabase se usa</p></div>
+      <div class="grid2">
+        <div class="card"><div id="meters" class="meters"></div></div>
+        <div class="card">
+          <h3>🔮 ¿Cuándo se quedaría corto?</h3>
+          <div id="forecast" class="forecast"></div>
+          <details id="tablesBox"><summary>Lo que más pesa</summary><div class="scroll"><table class="num-r"><thead><tr><th>Tabla</th><th>Filas</th><th>Tamaño</th></tr></thead><tbody id="tables"></tbody></table></div></details>
+          <p class="hint" style="margin-top:12px">El tráfico de salida (5 GB al mes) no se puede leer desde aquí: míralo en
+            <a href="https://supabase.com/dashboard/org/_/usage" target="_blank" rel="noopener">Supabase → Usage ↗</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Errores -->
+    <section class="sec" id="s-errores">
+      <div class="sec-h"><h2>Errores</h2><p>De la última semana</p></div>
+      <div class="card"><div id="errors"></div></div>
+    </section>
+
+    <!-- 7. Monedas -->
+    <section class="sec" id="s-monedas">
+      <div class="sec-h"><h2>Monedas de regalo</h2><p>Para agradecer a testers o a los primeros héroes</p></div>
+      <div class="grid2">
+        <div class="card">
+          <label for="g_name" style="margin-top:0">Usuario del héroe (o «todos»)</label>
+          <input id="g_name" placeholder="Laura">
+          <label for="g_coins">Monedas (1 a 5000)</label>
+          <input id="g_coins" type="number" min="1" max="5000" value="300">
+          <label for="g_reason">Motivo (sale en el aviso)</label>
+          <select id="g_reason">
+            <option value="tester">Por ayudar a probar</option>
+            <option value="founder">De los primeros héroes</option>
+            <option value="gift">Un regalo sin más</option>
+          </select>
+          <label for="g_msg">Mensaje (opcional, máx. 120)</label>
+          <input id="g_msg" maxlength="120" placeholder="Gracias por encontrar ese error">
+          <p style="margin-top:14px"><button id="g_send">🪙 Dar monedas</button></p>
+          <div id="g_out" class="msg"></div>
+        </div>
+        <div class="card">
+          <h3>Últimos regalos</h3>
+          <div class="scroll"><table><thead><tr><th>Cuándo</th><th>Héroe</th><th>Monedas</th><th>Motivo</th></tr></thead><tbody id="grants"></tbody></table></div>
+        </div>
+      </div>
+    </section>
+  </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
@@ -192,6 +331,8 @@
   const show = (id) => ['login', 'denied', 'dash'].forEach((x) => ($(x).hidden = x !== id));
   const say = (el, text, ok) => { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
   const when = (iso) => new Date(iso).toLocaleString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const fmt = (n) => Number(n).toLocaleString('es');
+  const plural = (n, one, many) => `${fmt(n)} ${n === 1 ? one : many}`;
   const REASONS = { tester: 'Probar', founder: 'Primeros', gift: 'Regalo' };
   // Los hitos del plan de lanzamiento (docs/plan-lanzamiento.md).
   const GOALS = [
@@ -199,112 +340,193 @@
     { name: 'Encender las monedas', weekly: 500, ret: 15 },
     { name: 'Temporadas', weekly: 2000, ret: null },
   ];
+  // Plan gratis de Supabase (nov 2026).
+  const LIMITS = { db: 500 * 1024 * 1024, mau: 50000, live: 200 };
+  const needs = (n) => `<p>Falta pegar la migración ${n} en Supabase (SQL Editor).</p>`;
 
   async function start() {
     const { data } = await db.auth.getSession();
-    $('out').hidden = !data.session;
+    $('out').hidden = $('reload').hidden = !data.session;
     if (!data.session) return show('login');
     const { data: admin } = await db.rpc('is_admin');
-    if (!admin) return show('denied');
+    if (!admin) { $('reload').hidden = true; return show('denied'); }
     show('dash');
     load();
   }
 
   async function load() {
-    const [m, g, e, h, u] = await Promise.all([
+    $('reload').disabled = true;
+    const [m, g, e, h, u, s] = await Promise.all([
       db.rpc('admin_metrics'), db.rpc('admin_recent_grants', { p_limit: 15 }), db.rpc('admin_error_versions', { p_limit: 200 }),
-      db.rpc('admin_daily_history', { p_days: 30 }), db.rpc('admin_usage'),
+      db.rpc('admin_daily_history', { p_days: 30 }), db.rpc('admin_usage'), db.rpc('admin_storage'),
     ]);
-    if (m.error) return say($('g_out'), 'No se pudieron leer las métricas: ' + m.error.message, false);
+    $('reload').disabled = false;
+    if (m.error) return say($('loadMsg'), 'No se pudieron leer las métricas: ' + m.error.message, false);
+    $('loadMsg').className = 'msg';
     const x = m.data;
     const ret = x.cohort30 ? Math.round((1000 * x.retained30) / x.cohort30) / 10 : null;
-    $('m_opened').textContent = x.opened7;
-    $('m_did').textContent = x.did7;
-    $('m_ret').textContent = ret == null ? '—' : ret + ' %';
-    $('m_new').textContent = x.new7;
-    $('m_acc').textContent = x.accounts;
-    $('m_soc').textContent = x.guilds + ' · ' + x.friendships;
-    // Hitos: cuánto falta, y de cuántas cuentas sale el D30 (con pocas, un % engaña).
-    const retOf = x.cohort30 ? ` (${x.retained30} de ${x.cohort30} ${x.cohort30 === 1 ? 'cuenta' : 'cuentas'})` : '';
-    $('goals').innerHTML = GOALS.map((goal) => {
-      const pct = Math.min(100, Math.round((100 * x.opened7) / goal.weekly));
-      const left = Math.max(0, goal.weekly - x.opened7);
-      const retOk = goal.ret == null || (ret != null && ret >= goal.ret);
-      return `<div class="goal"><div class="row"><span>${esc(goal.name)}</span><span>${left === 0 ? '✓ ' : ''}${x.opened7} / ${goal.weekly}</span></div>
-        <div class="bar"><i style="width:${pct}%"></i></div>
-        <small>${left === 0 ? 'Activos por semana: logrado' : `Faltan ${left} activos por semana`}</small>
-        ${goal.ret != null ? `<small>Se quedan al mes: ${ret == null ? 'aún sin datos (hacen falta cuentas de hace 30–60 días)' : ret + ' %' + retOf} · meta ${goal.ret} % ${retOk ? '✓' : ''}</small>` : ''}</div>`;
-    }).join('');
-    renderDaily(h.error ? null : h.data ?? [], x);
+    const hist = h.error ? null : h.data ?? [];
+    const st = s.error ? null : s.data;
+
+    $('m_opened').textContent = fmt(x.opened7);
+    $('m_did').textContent = fmt(x.did7);
+    $('m_ret').textContent = ret == null ? '—' : fmt(ret) + ' %';
+    $('m_ret_d').textContent = x.cohort30 ? `${x.retained30} de ${plural(x.cohort30, 'cuenta', 'cuentas')}` : 'Aún sin datos';
+    $('m_new').textContent = fmt(x.new7);
+    $('m_acc').textContent = fmt(x.accounts);
+    $('m_gld').textContent = fmt(x.guilds);
+    $('m_fr').textContent = fmt(x.friendships);
+    $('m_err').textContent = fmt(x.errors7 ?? 0);
+
+    renderGoals(x, ret);
+    renderDaily(hist, x);
+    renderWeeks(x.weeks);
     renderUsage(u.error ? null : u.data);
-    const max = Math.max(1, ...x.weeks.map((w) => w.new));
-    $('weeks').innerHTML = x.weeks.length
-      ? x.weeks.map((w) => `<div><small>${w.new}</small><em style="height:${Math.round((100 * w.new) / max)}%"></em><small>${esc(w.week.slice(5))}</small></div>`).join('')
-      : '<p>Aún no hay cuentas nuevas en estas semanas.</p>';
-    $('grants').innerHTML = (g.data ?? []).map((r) => `<tr><td>${when(r.created_at)}</td><td>${esc(r.hero)}</td><td>${r.coins}</td><td>${esc(REASONS[r.reason] ?? r.reason)}${r.message ? '<br><small>' + esc(r.message) + '</small>' : ''}</td></tr>`).join('') || '<tr><td colspan="4">Ninguno todavía.</td></tr>';
+    renderServer(st);
     renderErrors(e.error ? null : e.data ?? []);
+    renderGrants(g.data ?? []);
+    renderStory(x, hist, st);
     $('stamp').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
   }
 
-  const MISSING = '<p>Falta pegar la migración 0044 en Supabase (SQL Editor).</p>';
+  // ── La frase de arriba: lo esencial para leer de un vistazo ──
+  function renderStory(x, hist, st) {
+    const week = hist && hist.find((r) => daysAgo(r.day) === 7);
+    const d = week ? x.opened7 - week.opened7 : null;
+    const trend = d == null ? '' : d > 0 ? ` (<b>${d} más</b> que hace una semana)` : d < 0 ? ` (${-d} menos que hace una semana)` : ' (igual que hace una semana)';
+    const next = GOALS.find((g) => x.opened7 < g.weekly);
+    const goal = next ? ` Para «${esc(next.name)}» faltan <b>${fmt(next.weekly - x.opened7)}</b>.` : ' ¡Todos los hitos de activos logrados!';
+    const server = st ? ` El servidor usa el <b>${fmt(pct(st.db_bytes, LIMITS.db))} %</b> de su espacio${pct(st.db_bytes, LIMITS.db) < 50 ? ': tranquilo' : ''}.` : '';
+    $('story').innerHTML = `Esta semana <b>${plural(x.opened7, 'persona abrió', 'personas abrieron')}</b> la app${trend} y ${fmt(x.did7)} hicieron algo.${goal}${server}`;
+  }
+
+  // ── Hitos ──
+  function renderGoals(x, ret) {
+    $('goals').innerHTML = GOALS.map((goal, i) => {
+      const p = Math.min(100, Math.round((100 * x.opened7) / goal.weekly));
+      const left = Math.max(0, goal.weekly - x.opened7);
+      const retOk = goal.ret != null && ret != null && ret >= goal.ret;
+      const done = left === 0 && (goal.ret == null || retOk);
+      return `<div class="goal${done ? ' done' : ''}">
+        <span class="step">Hito ${i + 1}${done ? ' · ✓ logrado' : ''}</span>
+        <span class="name">${esc(goal.name)}</span>
+        <div class="row check"><span>Activos por semana</span><span><b>${fmt(x.opened7)}</b> / ${fmt(goal.weekly)}</span></div>
+        <div class="bar"><i style="width:${p}%"></i></div>
+        <span class="hint">${left === 0 ? '✓ Logrado' : `Faltan ${fmt(left)}`}</span>
+        ${goal.ret != null ? `<div class="row check"><span>Se quedan al mes</span><span>${ret == null ? 'sin datos' : `<b>${fmt(ret)} %</b>`} / ${goal.ret} % ${retOk ? '✓' : ''}</span></div>` : ''}
+      </div>`;
+    }).join('');
+  }
 
   // ── Activos día a día: barras doradas (abrieron) y moradas (hicieron algo) de los últimos 30 días ──
   function renderDaily(rows, x) {
-    if (!rows) { $('daily').innerHTML = MISSING; return; }
+    if (!rows) { $('daily').innerHTML = needs('0044'); return; }
     const week = rows.find((r) => daysAgo(r.day) === 7);
     delta('m_opened_d', x.opened7, week && week.opened7);
     delta('m_did_d', x.did7, week && week.did7);
     if (rows.length < 2) {
-      $('daily').innerHTML = `<p>Desde hoy se guarda una foto de los totales cada día y la gráfica se va llenando sola${rows.length ? ` (hoy: ${rows[0].opened1} abrieron la app y ${rows[0].did1} hicieron algo)` : ''}.</p>`;
+      $('daily').innerHTML = `<p>Se guarda una foto de los totales cada día y la gráfica se va llenando sola${rows.length ? ` (hoy: ${fmt(rows[0].opened1)} abrieron la app y ${fmt(rows[0].did1)} hicieron algo)` : ''}. Mañana ya hay dos días para comparar.</p>`;
       return;
     }
-    const max = Math.max(1, ...rows.map((r) => Math.max(r.opened1, r.did1)));
+    const max = niceMax(Math.max(1, ...rows.map((r) => Math.max(r.opened1, r.did1))));
     const h = (n) => Math.round((100 * n) / max);
-    $('daily').innerHTML = `<div class="days">${rows.map((r) => `<div title="${esc(fmtDay(r.day))}: ${r.opened1} abrieron · ${r.did1} hicieron algo"><div class="pair"><i style="height:${h(r.opened1)}%"></i><i class="did" style="height:${h(r.did1)}%"></i></div></div>`).join('')}</div>
+    $('daily').innerHTML = `<div class="chart">
+        <div class="gl" style="top:0"><span>${fmt(max)}</span></div><div class="gl" style="top:50%"><span>${fmt(max / 2)}</span></div>
+        <div class="cols">${rows.map((r) => `<div title="${esc(fmtDay(r.day))}: ${r.opened1} abrieron · ${r.did1} hicieron algo"><i style="height:${h(r.opened1)}%"></i><i class="v" style="height:${h(r.did1)}%"></i></div>`).join('')}</div>
+      </div>
       <div class="axis"><span>${esc(fmtDay(rows[0].day))}</span><span>${esc(fmtDay(rows[rows.length - 1].day))}</span></div>
-      <div class="legend"><span><b style="background:var(--gold)"></b>Abrieron la app (24 h)</span><span><b style="background:#8f7cff"></b>Hicieron algo (24 h)</span></div>`;
+      <div class="legend"><span><b style="background:var(--gold)"></b>Abrieron la app ese día</span><span><b style="background:var(--violet)"></b>Hicieron algo ese día</span></div>`;
   }
+  const niceMax = (n) => { const p = 10 ** Math.floor(Math.log10(n)); for (const k of [1, 2, 5, 10]) if (k * p >= n) return Math.max(2, k * p); return n; };
   const daysAgo = (day) => Math.round((Date.now() - new Date(day + 'T12:00:00').getTime()) / 864e5);
   const fmtDay = (day) => new Date(day + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short' });
   function delta(id, now, before) {
     const el = $(id);
-    if (before == null) { el.textContent = ''; el.className = 'delta'; return; }
+    if (before == null) { el.textContent = 'Sin comparación aún'; el.className = 'delta'; return; }
     const d = now - before;
-    el.textContent = d === 0 ? 'igual que hace 7 días' : `${d > 0 ? '▲ +' : '▼ '}${d} vs. hace 7 días`;
+    el.textContent = d === 0 ? '= igual que hace 7 días' : `${d > 0 ? '▲ +' : '▼ '}${fmt(d)} vs. hace 7 días`;
     el.className = 'delta ' + (d > 0 ? 'up' : d < 0 ? 'down' : '');
+  }
+
+  function renderWeeks(weeks) {
+    const max = Math.max(1, ...weeks.map((w) => w.new));
+    $('weeks').innerHTML = weeks.length
+      ? weeks.map((w) => `<div><small class="n">${w.new}</small><em style="height:${Math.round((100 * w.new) / max)}%"></em><small>${esc(fmtDay(w.week))}</small></div>`).join('')
+      : '<p>Aún no hay cuentas nuevas en estas semanas.</p>';
   }
 
   // ── Qué se usa ──
   const USAGE = [
     ['teams', '👥 Misiones en equipo creadas'], ['guilds', '🏰 Gremios nuevos'], ['shared', '📣 Logros compartidos'],
-    ['cheers', '🔥 Reacciones y celebraciones'], ['blessings', '✨ Bendiciones'], ['gifts', '🎁 Regalos entre amigos'],
+    ['cheers', '🔥 Reacciones y celebraciones'], ['blessings', '✨ Celebraciones con XP'], ['gifts', '🎁 Regalos entre amigos'],
   ];
   function renderUsage(u) {
-    if (!u) { $('usage').innerHTML = '<tr><td colspan="3">Falta pegar la migración 0044 en Supabase.</td></tr>'; return; }
+    if (!u) { $('usage').innerHTML = `<tr><td colspan="3">${needs('0044')}</td></tr>`; return; }
     $('usage').innerHTML = USAGE.map(([k, label]) => {
       const [now, before] = u[k] ?? [0, 0];
-      const arrow = now > before ? ' <span style="color:var(--good)">▲</span>' : now < before ? ' <span style="color:var(--warn)">▼</span>' : '';
-      return `<tr><td>${label}</td><td><b>${now}</b>${arrow}</td><td>${before}</td></tr>`;
+      const arrow = now > before ? ' <span style="color:var(--good)">▲</span>' : now < before ? ' <span style="color:var(--bad)">▼</span>' : '';
+      return `<tr><td>${label}</td><td><b>${fmt(now)}</b>${arrow}</td><td>${fmt(before)}</td></tr>`;
     }).join('');
+  }
+
+  // ── Servidor: medidores del plan gratis, pronóstico y lo que más pesa ──
+  const pct = (used, limit) => Math.round((1000 * used) / limit) / 10;
+  const mb = (b) => (b >= 1024 ** 3 ? (b / 1024 ** 3).toFixed(2) + ' GB' : (b / 1024 ** 2).toLocaleString('es', { maximumFractionDigits: b < 10 * 1024 ** 2 ? 1 : 0 }) + ' MB');
+  const level = (p) => (p < 50 ? ['good', 'Tranquilo'] : p < 80 ? ['warn', 'Ojo'] : ['bad', 'Cerca del límite']);
+  function meter(title, used, limit, show, of, hint) {
+    const p = pct(used, limit);
+    const [cls, word] = level(p);
+    return `<div class="meter"><div class="row"><span class="check"><b>${title}</b></span><span class="pill ${cls}">${word}</span></div>
+      <div class="row"><span class="big">${show}</span><span class="of">de ${of} · ${fmt(p)} %</span></div>
+      <div class="bar ${cls}"><i style="width:${Math.max(1, Math.min(100, p))}%"></i></div><span class="hint">${hint}</span></div>`;
+  }
+  function renderServer(st) {
+    if (!st) { $('meters').innerHTML = needs('0046'); $('forecast').innerHTML = needs('0046'); $('tablesBox').hidden = true; return; }
+    $('tablesBox').hidden = false;
+    $('meters').innerHTML =
+      meter('💾 Base de datos', st.db_bytes, LIMITS.db, mb(st.db_bytes), '500 MB', 'Todo lo guardado en el servidor: cuentas, amigos, equipos, copias en la nube. Si se llena, deja de escribir.')
+      + meter('👤 Usuarios del mes', st.mau, LIMITS.mau, fmt(st.mau), '50.000', 'Cuentas que usaron la app en los últimos 30 días.')
+      + meter('📡 Conexiones en vivo', st.live1h, LIMITS.live, fmt(st.live1h), '200 a la vez', 'Con la app abierta en la última hora (aprox.; cada una mantiene una conexión en vivo).');
+    $('forecast').innerHTML = forecast(st);
+    $('tables').innerHTML = st.tables.map((t) => `<tr><td>${esc(t.name)}</td><td>${fmt(t.rows)}</td><td>${mb(t.bytes)}</td></tr>`).join('');
+  }
+  function forecast(st) {
+    const hs = st.history;
+    const first = hs[0];
+    const span = first ? daysAgo(first.day) : 0;
+    if (span < 7) {
+      return `Para pronosticar hacen falta al menos 7 días de fotos${first ? ` (la primera es del ${esc(fmtDay(first.day))})` : ''}. Mientras tanto: hoy usa <b>${mb(st.db_bytes)}</b> de 500 MB, el <b>${fmt(pct(st.db_bytes, LIMITS.db))} %</b>.`;
+    }
+    const perDay = (st.db_bytes - first.bytes) / span;
+    if (perDay <= 1024) return `En ${span} días la base casi no creció. <b>No hay de qué preocuparse</b> por ahora.`;
+    const daysLeft = (LIMITS.db - st.db_bytes) / perDay;
+    const date = new Date(Date.now() + daysLeft * 864e5).toLocaleDateString('es', { month: 'long', year: 'numeric' });
+    const months = Math.round(daysLeft / 30);
+    const when2 = daysLeft > 3650 ? 'más de 10 años' : months >= 2 ? `unos <b>${months} meses</b> (${date})` : `unos <b>${Math.round(daysLeft)} días</b>`;
+    return `Crece unos <b>${mb(perDay * 7)} por semana</b>. A este ritmo, la base de datos se llenaría en ${when2}. Con más usuarios crece más rápido: se recalcula cada día.`;
   }
 
   // ── Errores por versión: la más nueva a la vista; las anteriores plegadas (suelen ser cosas ya arregladas) ──
   const verKey = (v) => (String(v).match(/\d+/g) ?? []).map(Number).reduce((a, n) => a * 1000 + n, 0);
   function errorTable(rows) {
     return `<div class="scroll"><table><thead><tr><th>Veces</th><th>Mensaje</th><th class="err-screen">Pantalla</th><th>Último</th></tr></thead><tbody>${rows
-      .map((r) => `<tr><td>${r.times}</td><td>${esc(r.message)}</td><td class="err-screen">${esc(r.screen)}</td><td>${when(r.last_at)}</td></tr>`).join('')}</tbody></table></div>`;
+      .map((r) => `<tr><td><b>${r.times}</b></td><td>${esc(r.message)}</td><td class="err-screen">${esc(r.screen)}</td><td>${when(r.last_at)}</td></tr>`).join('')}</tbody></table></div>`;
   }
   function renderErrors(rows) {
-    if (!rows) { $('errors').innerHTML = MISSING; return; }
-    if (!rows.length) { $('errors').innerHTML = '<p>Sin errores esta semana ✓</p>'; return; }
+    if (!rows) { $('errors').innerHTML = needs('0044'); return; }
+    if (!rows.length) { $('errors').innerHTML = '<p class="ok-big">✓ Sin errores esta semana</p>'; return; }
     const byVer = new Map();
     for (const r of rows) byVer.set(r.app_version, [...(byVer.get(r.app_version) ?? []), r]);
     const vers = [...byVer.keys()].sort((a, b) => verKey(b) - verKey(a));
     const sorted = (v) => byVer.get(v).sort((a, b) => b.times - a.times);
     const [newest, ...older] = vers;
     const olderCount = older.reduce((n, v) => n + byVer.get(v).reduce((t, r) => t + Number(r.times), 0), 0);
-    $('errors').innerHTML = `<p class="ver">Versión <b>${esc(newest)}</b> (la más nueva con errores)</p>${errorTable(sorted(newest))}`
+    $('errors').innerHTML = `<p class="ver" style="margin-top:0">Versión <b>${esc(newest)}</b> · la más nueva con errores: estos son los que importan</p>${errorTable(sorted(newest))}`
       + (older.length ? `<details><summary>De versiones anteriores (${olderCount}) · probablemente ya arreglados</summary>${older.map((v) => `<p class="ver">Versión <b>${esc(v)}</b></p>${errorTable(sorted(v))}`).join('')}</details>` : '');
+  }
+
+  function renderGrants(rows) {
+    $('grants').innerHTML = rows.map((r) => `<tr><td>${when(r.created_at)}</td><td>${esc(r.hero)}</td><td>🪙 ${fmt(r.coins)}</td><td>${esc(REASONS[r.reason] ?? r.reason)}${r.message ? '<br><small>' + esc(r.message) + '</small>' : ''}</td></tr>`).join('') || '<tr><td colspan="4">Ninguno todavía.</td></tr>';
   }
 
   // Entrar
